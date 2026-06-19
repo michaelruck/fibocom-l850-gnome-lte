@@ -43,8 +43,13 @@ fi
 
 echo "APN set to '$APN' in $CONF"
 
-# Apply immediately: restart bring-up, then re-arm the data interface.
+# Apply immediately. The XMM7360 only accepts its RPC init once per module
+# load, so a plain service restart would fail with ENODEV while the modem is
+# already attached. Reload the kernel module to get a clean slate, then bring
+# the connection up again with the new APN.
+echo "Reloading modem and reconnecting with the new APN…"
+modprobe -r xmm7360 2>/dev/null || true
+modprobe xmm7360 || true
+sleep 3
 systemctl restart fibocom-l850-up.service || true
 /usr/local/bin/fibocom-l850-ctl on || true
-
-echo "Reconnecting with the new APN…"

@@ -182,7 +182,8 @@ automation, set up DKMS for the xmm7360-pci module — that is out of scope here
 - **`wwan0` never appears:** is `xmm7360` loaded (`lsmod | grep xmm7360`)? Built
   for *this* kernel? Check `journalctl -u fibocom-l850-up.service -b`.
 - **Connected but no internet / DNS fails:** set `DNS=` in `modem.conf` to your
-  carrier's resolvers or a public one (e.g. `1.1.1.1 9.9.9.9`).
+  carrier's resolvers or a public one. Quote multiple servers, since the file is
+  sourced by the shell: `DNS="1.1.1.1 9.9.9.9"`.
 - **Toggle shows "Disconnected" but you have data:** the `sudo -n` rule may be
   missing — re-run the installer; check `/etc/sudoers.d/fibocom-l850-lte`.
 - **Still "not registered":** re-read the SIM warning at the top. Seriously.

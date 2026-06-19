@@ -38,7 +38,12 @@ def rpc_dir():
 
 
 def operator_name(mcc, mnc):
-    """Look up '<MCC><MNC>' in the user-editable operators.csv (PLMN,Name)."""
+    """Strict lookup of '<MCC><MNC>' in the user-editable operators.csv.
+
+    Returns the friendly name, or None if the PLMN is not listed. The CSV is
+    also used to disambiguate when the modem reports several PLMNs (serving
+    network plus neighbours/equivalents): the one the user has listed wins.
+    """
     if mcc is None or mnc is None:
         return None
     keys = ('%d%02d' % (mcc, mnc), '%d%03d' % (mcc, mnc), '%d%d' % (mcc, mnc))
@@ -53,8 +58,7 @@ def operator_name(mcc, mnc):
                     return name.strip()
     except OSError:
         pass
-    # Fall back to the raw PLMN so the user still sees *something*.
-    return '%d/%d' % (mcc, mnc)
+    return None
 
 
 def iface_state():
@@ -107,19 +111,29 @@ def query_modem():
         try:
             reg = r.execute('CsiMsNetGetRegistrationInfoReq', is_async=True)
             rc = reg['content']
-            # The registration info embeds the MCC and MNC. We scan for an MCC
-            # in the valid range (200-799) immediately followed by the MNC.
-            for i in range(len(rc) - 1):
-                v = rc[i]
-                if isinstance(v, int) and 200 <= v <= 799:
-                    nxt = rc[i + 1]
-                    if isinstance(nxt, int) and 0 <= nxt <= 999:
-                        name = operator_name(v, nxt)
-                        if name:
-                            out['operator'] = name
-                            out['mcc'] = v
-                            out['mnc'] = nxt
-                        break
+            # The registration info embeds the MNC immediately *before* the MCC
+            # (e.g. ... <MNC> <MCC=232> ...), and may list several PLMNs (the
+            # serving network plus neighbours/equivalents). Collect all
+            # plausible (MCC, MNC) pairs, then prefer the one the user has in
+            # operators.csv; otherwise fall back to the first candidate.
+            cands = []
+            for i in range(1, len(rc)):
+                mcc, mnc = rc[i], rc[i - 1]
+                if (isinstance(mcc, int) and 200 <= mcc <= 799 and
+                        isinstance(mnc, int) and 0 <= mnc <= 999):
+                    if (mcc, mnc) not in cands:
+                        cands.append((mcc, mnc))
+            chosen = None
+            for mcc, mnc in cands:
+                name = operator_name(mcc, mnc)
+                if name:
+                    chosen = (mcc, mnc, name)
+                    break
+            if chosen is None and cands:
+                mcc, mnc = cands[0]
+                chosen = (mcc, mnc, '%d/%02d' % (mcc, mnc))
+            if chosen:
+                out['mcc'], out['mnc'], out['operator'] = chosen
         except Exception:
             pass
     _sig.alarm(0)
