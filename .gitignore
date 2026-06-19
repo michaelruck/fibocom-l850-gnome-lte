@@ -4,3 +4,6 @@ schemas/gschemas.compiled
 gnome-extension/*/schemas/gschemas.compiled
 __pycache__/
 *.pyc
+
+# EGO build artifact (upload manually, do not commit)
+*.shell-extension.zip

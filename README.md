@@ -12,6 +12,8 @@ the Wi-Fi switch) showing operator, RAT and signal in dBm.
 Found on hardware such as the **Lenovo IdeaPad Duet 3 (10IGL5 LTE)** and many
 other laptops shipping the Fibocom L850-GL (PCI ID `8086:7360`).
 
+![The Mobile Data toggle in the GNOME Quick Settings panel, showing operator, RAT and signal](docs/screenshot-toggle.png)
+
 ---
 
 ## Does this describe your problem?
@@ -189,6 +191,11 @@ automation, set up DKMS for the xmm7360-pci module — that is out of scope here
 - **Still "not registered":** re-read the SIM warning at the top. Seriously.
 
 ---
+
+## Publishing the extension
+
+Want to offer one-click install via extensions.gnome.org? See
+[docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## Credits
 
