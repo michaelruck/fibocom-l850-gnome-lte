@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+# fibocom-l850-status — report LTE status as JSON for the GNOME toggle.
+#
+# Reads the wwan0 interface state and, when connected, queries the modem over
+# the xmm7360 RPC channel for signal strength and the registered operator.
+# Querying RPC while a data session is up is safe (read-only requests).
+#
+# Output example:
+#   {"state": "connected", "rsrp_dbm": -93, "earfcn": 1525,
+#    "rat": "LTE", "operator": "Three AT", "bars": 3}
+#
+# Part of fibocom-l850-gnome-lte. SPDX-License-Identifier: GPL-3.0-or-later
+import sys, os, json, subprocess, signal as _sig, io, contextlib
+
+CONF = '/etc/fibocom-l850-lte/modem.conf'
+OPERATORS_CSV = '/etc/fibocom-l850-lte/operators.csv'
+DEFAULT_XMM7360_DIR = '/opt/xmm7360-pci'
+
+
+def read_conf(path):
+    cfg = {}
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, _, v = line.partition('=')
+                cfg[k.strip()] = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return cfg
+
+
+def rpc_dir():
+    xdir = read_conf(CONF).get('XMM7360_DIR', DEFAULT_XMM7360_DIR)
+    return os.path.join(xdir, 'rpc')
+
+
+def operator_name(mcc, mnc):
+    """Look up '<MCC><MNC>' in the user-editable operators.csv (PLMN,Name)."""
+    if mcc is None or mnc is None:
+        return None
+    keys = ('%d%02d' % (mcc, mnc), '%d%03d' % (mcc, mnc), '%d%d' % (mcc, mnc))
+    try:
+        with open(OPERATORS_CSV) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or ',' not in line:
+                    continue
+                plmn, _, name = line.partition(',')
+                if plmn.strip() in keys:
+                    return name.strip()
+    except OSError:
+        pass
+    # Fall back to the raw PLMN so the user still sees *something*.
+    return '%d/%d' % (mcc, mnc)
+
+
+def iface_state():
+    try:
+        link = subprocess.run(['ip', '-o', 'link', 'show', 'wwan0'],
+                              capture_output=True, text=True).stdout
+        if not link:
+            return 'absent'
+        flags = link.split('>')[0]
+        up = ('UP' in flags.split('<')[-1].split(','))
+        route = subprocess.run(['ip', 'route', 'show', 'default', 'dev', 'wwan0'],
+                               capture_output=True, text=True).stdout.strip()
+        if up and route:
+            return 'connected'
+        return 'off'
+    except Exception:
+        return 'unknown'
+
+
+def bars_from_rsrp(dbm):
+    if dbm is None:        return 0
+    if dbm >= -85:         return 4
+    if dbm >= -95:         return 3
+    if dbm >= -105:        return 2
+    if dbm >= -115:        return 1
+    return 0
+
+
+def query_modem():
+    out = {}
+    sys.path.insert(0, rpc_dir())
+    import rpc
+    _sig.alarm(6)
+    sink = io.StringIO()
+    with contextlib.redirect_stdout(sink):
+        r = rpc.XMMRPC()
+        resp = r.execute('UtaMsNetGetExtendedRadioSignalInfoReq', is_async=True)
+        c = resp['content']
+        if len(c) >= 7:
+            # Last 7 fields: [_, RAT, RSRQ, RSRP_LEV, EARFCN, RSSI, _]
+            tail = c[-7:]
+            rsrp_lev = tail[3]; earfcn = tail[4]
+            if isinstance(rsrp_lev, int) and 0 < rsrp_lev < 98:
+                out['rsrp_dbm'] = rsrp_lev - 141
+            if isinstance(earfcn, int) and 0 < earfcn < 70000:
+                # A valid E-UTRA ARFCN implies LTE; the RAT field position is
+                # unstable in this variable-length response, so derive it here.
+                out['earfcn'] = earfcn
+                out['rat'] = 'LTE'
+        try:
+            reg = r.execute('CsiMsNetGetRegistrationInfoReq', is_async=True)
+            rc = reg['content']
+            # The registration info embeds the MCC and MNC. We scan for an MCC
+            # in the valid range (200-799) immediately followed by the MNC.
+            for i in range(len(rc) - 1):
+                v = rc[i]
+                if isinstance(v, int) and 200 <= v <= 799:
+                    nxt = rc[i + 1]
+                    if isinstance(nxt, int) and 0 <= nxt <= 999:
+                        name = operator_name(v, nxt)
+                        if name:
+                            out['operator'] = name
+                            out['mcc'] = v
+                            out['mnc'] = nxt
+                        break
+        except Exception:
+            pass
+    _sig.alarm(0)
+    return out
+
+
+def main():
+    res = {'state': iface_state()}
+    if res['state'] == 'connected':
+        try:
+            res.update(query_modem())
+        except Exception as e:
+            res['rpc_error'] = str(e)
+        res.setdefault('rat', 'LTE')
+    res['bars'] = bars_from_rsrp(res.get('rsrp_dbm')) if res['state'] == 'connected' else 0
+    print(json.dumps(res))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(json.dumps({'state': 'unknown', 'error': str(e), 'bars': 0}))

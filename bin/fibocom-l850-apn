@@ -1,0 +1,50 @@
+#!/bin/bash
+# fibocom-l850-apn — set the APN used to bring up the LTE connection.
+#
+# Usage:  fibocom-l850-apn <apn>
+#
+# Rewrites the APN= line in /etc/fibocom-l850-lte/modem.conf and restarts the
+# bring-up service so the new APN takes effect. Intended to be invoked as root,
+# typically via pkexec from the GNOME extension preferences (see the polkit
+# policy shipped with this project).
+#
+# Part of fibocom-l850-gnome-lte. SPDX-License-Identifier: GPL-3.0-or-later
+set -eu
+
+CONF=/etc/fibocom-l850-lte/modem.conf
+
+if [ "$#" -ne 1 ] || [ -z "${1:-}" ]; then
+    echo "usage: $0 <apn>" >&2
+    exit 2
+fi
+APN="$1"
+
+# Accept only sane APN characters (letters, digits, dot, dash, underscore).
+# An APN is a hostname-like label; reject anything that could break the conf.
+if ! printf '%s' "$APN" | grep -qE '^[A-Za-z0-9._-]+$'; then
+    echo "fibocom-l850-apn: invalid APN '$APN'" >&2
+    echo "Allowed characters: letters, digits, dot, dash, underscore." >&2
+    exit 2
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "fibocom-l850-apn: must run as root (try: pkexec $0 $APN)" >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname "$CONF")"
+touch "$CONF"
+
+if grep -qE '^[[:space:]]*APN=' "$CONF"; then
+    sed -i -E "s|^[[:space:]]*APN=.*|APN=${APN}|" "$CONF"
+else
+    printf 'APN=%s\n' "$APN" >> "$CONF"
+fi
+
+echo "APN set to '$APN' in $CONF"
+
+# Apply immediately: restart bring-up, then re-arm the data interface.
+systemctl restart fibocom-l850-up.service || true
+/usr/local/bin/fibocom-l850-ctl on || true
+
+echo "Reconnecting with the new APN…"

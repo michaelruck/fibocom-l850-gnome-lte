@@ -1,0 +1,5 @@
+# Allow the desktop user to toggle LTE and read its status without a password,
+# so the GNOME Quick Settings toggle works non-interactively.
+# The installer replaces __USER__ with your login name.
+# Validate with: visudo -cf /etc/sudoers.d/fibocom-l850-lte
+__USER__ ALL=(root) NOPASSWD: /usr/local/bin/fibocom-l850-ctl on, /usr/local/bin/fibocom-l850-ctl off, /usr/local/bin/fibocom-l850-status

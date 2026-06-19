@@ -1,0 +1,27 @@
+# PLMN,Operator name — used by fibocom-l850-status to show a friendly network
+# name in the GNOME toggle. PLMN = MCC followed by MNC (2- or 3-digit).
+# This list is intentionally short; add your own carrier if it is missing.
+# If a PLMN is not found here, the raw "MCC/MNC" is shown instead.
+#
+# PLMN,Name
+23201,A1 AT
+23203,Magenta AT
+23210,Three AT
+26201,Telekom DE
+26202,Vodafone DE
+26203,O2 DE
+20801,Orange FR
+20810,SFR FR
+20815,Free FR
+20820,Bouygues FR
+22201,TIM IT
+22210,Vodafone IT
+21401,Vodafone ES
+21403,Orange ES
+21407,Movistar ES
+23410,O2 UK
+23415,Vodafone UK
+23420,Three UK
+310260,T-Mobile US
+311480,Verizon US
+310410,AT&T US

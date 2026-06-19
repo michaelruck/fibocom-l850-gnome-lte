@@ -1,0 +1,43 @@
+#!/bin/bash
+# fibocom-l850-up — bring the Fibocom L850 / Intel XMM7360 modem online.
+#
+# Reads /etc/fibocom-l850-lte/modem.conf, then calls the xmm7360-pci bring-up
+# script (rpc/open_xdatachannel.py) with the configured APN and route metric.
+#
+# Note: open_xdatachannel.py intentionally exits 1 once the wwan0 link + route
+# are up (it only stays resident with --dbus). That exit code is therefore
+# treated as success by the systemd unit (SuccessExitStatus=1). We register the
+# optional DNS servers *after* the script returns, because the interface only
+# exists once bring-up has run.
+#
+# Part of fibocom-l850-gnome-lte. SPDX-License-Identifier: GPL-3.0-or-later
+set -u
+
+CONF=/etc/fibocom-l850-lte/modem.conf
+
+# Defaults (overridden by the config file).
+APN=internet
+DNS=
+METRIC=1000
+XMM7360_DIR=/opt/xmm7360-pci
+
+[ -r "$CONF" ] && . "$CONF"
+
+RPC_DIR="$XMM7360_DIR/rpc"
+if [ ! -f "$RPC_DIR/open_xdatachannel.py" ]; then
+    echo "fibocom-l850-up: cannot find $RPC_DIR/open_xdatachannel.py" >&2
+    echo "Set XMM7360_DIR in $CONF to your xmm7360-pci checkout." >&2
+    exit 2
+fi
+
+cd "$RPC_DIR" || exit 2
+python3 ./open_xdatachannel.py -a "$APN" -m "$METRIC" --noresolv
+rc=$?
+
+# open_xdatachannel.py returns 1 on the normal (non-dbus) path; that's expected.
+if [ -n "$DNS" ]; then
+    # shellcheck disable=SC2086
+    resolvectl dns wwan0 $DNS 2>/dev/null || true
+fi
+
+exit "$rc"

@@ -1,0 +1,44 @@
+#!/bin/bash
+# fibocom-l850-ctl — enable/disable the LTE data interface for the GNOME toggle.
+#
+# This only brings the wwan0 *link* up/down and manages its default route.
+# The first "on" after boot (when wwan0 does not exist yet) triggers the
+# systemd bring-up service, which talks to the modem over the xmm7360 RPC
+# channel and creates wwan0.
+#
+# Part of fibocom-l850-gnome-lte. SPDX-License-Identifier: GPL-3.0-or-later
+set -u
+
+IFACE=wwan0
+CONF=/etc/fibocom-l850-lte/modem.conf
+METRIC=1000
+[ -r "$CONF" ] && . "$CONF"
+
+case "${1:-}" in
+  on)
+    if ip link show "$IFACE" >/dev/null 2>&1; then
+      ip link set "$IFACE" up
+      if ! ip route show default dev "$IFACE" | grep -q .; then
+        ip route add default dev "$IFACE" metric "$METRIC"
+      fi
+    else
+      systemctl start fibocom-l850-up.service
+    fi
+    ;;
+  off)
+    if ip link show "$IFACE" >/dev/null 2>&1; then
+      ip link set "$IFACE" down
+    fi
+    ;;
+  status)
+    if ip link show "$IFACE" 2>/dev/null | head -1 | grep -qw UP; then
+      echo on
+    else
+      echo off
+    fi
+    ;;
+  *)
+    echo "usage: $0 {on|off|status}" >&2
+    exit 2
+    ;;
+esac

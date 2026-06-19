@@ -1,0 +1,9 @@
+{
+  "uuid": "fibocom-l850-lte@michaelruck.github.io",
+  "name": "Fibocom L850 LTE Toggle",
+  "description": "Quick Settings toggle for the Fibocom L850 / Intel XMM7360 LTE modem (wwan0): turn mobile data on/off and see signal strength, operator and RAT. Set your APN in the preferences. Requires the helper scripts from fibocom-l850-gnome-lte.",
+  "url": "https://github.com/michaelruck/fibocom-l850-gnome-lte",
+  "shell-version": ["45", "46", "47", "48"],
+  "settings-schema": "org.gnome.shell.extensions.fibocom-l850-lte",
+  "version": 1
+}

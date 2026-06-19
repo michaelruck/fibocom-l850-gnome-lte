@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+  polkit action for changing the LTE APN from the GNOME extension preferences.
+  Lets prefs.js run `pkexec /usr/local/bin/fibocom-l850-apn <apn>` and get a
+  graphical password prompt instead of needing a terminal.
+
+  Part of fibocom-l850-gnome-lte. SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<policyconfig>
+  <vendor>fibocom-l850-gnome-lte</vendor>
+  <vendor_url>https://github.com/michaelruck/fibocom-l850-gnome-lte</vendor_url>
+
+  <action id="org.fibocom.l850.set-apn">
+    <description>Change the mobile data APN</description>
+    <message>Authentication is required to change the mobile data APN</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/fibocom-l850-apn</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

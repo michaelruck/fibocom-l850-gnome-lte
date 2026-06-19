@@ -1,0 +1,21 @@
+[Unit]
+Description=Bring up Fibocom L850 / XMM7360 LTE (SIM init + attach)
+Documentation=https://github.com/michaelruck/fibocom-l850-gnome-lte
+After=systemd-modules-load.service network-pre.target
+Wants=network-pre.target
+# Guard against rapid restarts (the modem dislikes being hammered).
+StartLimitIntervalSec=120
+StartLimitBurst=4
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=PYTHONUNBUFFERED=1
+# Give the modem a moment to enumerate after the module loads.
+ExecStartPre=/bin/sleep 8
+ExecStart=/usr/local/bin/fibocom-l850-up
+# open_xdatachannel.py exits 1 once wwan0 is up (it is not a daemon here).
+SuccessExitStatus=1
+
+[Install]
+WantedBy=multi-user.target

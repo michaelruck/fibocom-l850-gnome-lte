@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.fibocom-l850-lte"
+          path="/org/gnome/shell/extensions/fibocom-l850-lte/">
+    <key name="poll-seconds" type="i">
+      <default>10</default>
+      <range min="3" max="120"/>
+      <summary>Status poll interval</summary>
+      <description>How often, in seconds, to refresh signal and operator info.</description>
+    </key>
+  </schema>
+</schemalist>
