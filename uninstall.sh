@@ -38,6 +38,11 @@ echo "==> Removing sudoers + polkit"
 rm -f /etc/sudoers.d/fibocom-l850-lte
 rm -f /usr/share/polkit-1/actions/org.fibocom.l850.policy
 
+echo "==> Removing ModemManager-ignore udev rule"
+rm -f /etc/udev/rules.d/99-fibocom-l850-mm-ignore.rules
+udevadm control --reload-rules 2>/dev/null || true
+systemctl restart ModemManager 2>/dev/null || true
+
 if [ -n "$USER_HOME" ]; then
     echo "==> Removing GNOME extension"
     rm -rf "$USER_HOME/.local/share/gnome-shell/extensions/$UUID"

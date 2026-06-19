@@ -1,0 +1,10 @@
+# fibocom-l850-gnome-lte: this Fibocom L850 / Intel XMM7360 modem is driven by
+# the userspace xmm7360-pci driver, NOT by ModemManager.
+#
+# Without this rule, ModemManager grabs the modem's AT (ttyXMM*) ports once the
+# xmm7360 driver has brought the modem up, and NetworkManager then shows a
+# phantom mobile-broadband toggle (often named after the SIM, e.g. "Lidl").
+# That toggle cannot actually carry data here -- the data path needs the
+# proprietary xmm7360 RPC channel -- and it only competes with our own toggle.
+# Tell ModemManager to ignore the device entirely.
+SUBSYSTEMS=="pci", ATTRS{vendor}=="0x8086", ATTRS{device}=="0x7360", ENV{ID_MM_DEVICE_IGNORE}="1"

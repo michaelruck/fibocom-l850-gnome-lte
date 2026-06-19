@@ -75,6 +75,13 @@ install -m 0644 "$SRC/etc/modprobe.d/blacklist-iosm.conf" /etc/modprobe.d/blackl
 install -m 0644 "$SRC/etc/modules-load.d/xmm7360.conf"    /etc/modules-load.d/xmm7360.conf
 install -m 0644 "$SRC/etc/systemd/system/fibocom-l850-up.service" /etc/systemd/system/fibocom-l850-up.service
 
+# Stop ModemManager from grabbing the modem and showing a phantom toggle.
+echo "==> Installing udev rule to keep ModemManager off the modem"
+install -m 0644 "$SRC/etc/udev/rules.d/99-fibocom-l850-mm-ignore.rules" /etc/udev/rules.d/99-fibocom-l850-mm-ignore.rules
+udevadm control --reload-rules 2>/dev/null || true
+udevadm trigger --subsystem-match=tty --subsystem-match=net 2>/dev/null || true
+systemctl restart ModemManager 2>/dev/null || true
+
 # --- sudoers (passwordless toggle) ------------------------------------------
 echo "==> Installing sudoers rule for $TARGET_USER"
 SUDO_TMP="$(mktemp)"

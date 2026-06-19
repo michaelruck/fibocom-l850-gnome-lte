@@ -143,6 +143,7 @@ isn't listed.
 
 | Piece | Role |
 |-------|------|
+| `99-fibocom-l850-mm-ignore.rules` | udev rule telling ModemManager to leave this modem alone (see below). |
 | `fibocom-l850-up.service` | On boot: waits for the module, runs the bring-up wrapper. |
 | `fibocom-l850-up` | Reads `modem.conf`, calls `open_xdatachannel.py` with your APN, registers DNS. |
 | `fibocom-l850-ctl on/off/status` | Toggles the `wwan0` link + default route (used by the GNOME toggle). |
@@ -163,6 +164,26 @@ while a data session is active.
 > `Restart=`** — otherwise it loops re-attaching forever.
 
 ---
+
+## A phantom "mobile" toggle from ModemManager
+
+Once the xmm7360 driver brings the modem up, its AT ports (`ttyXMM*`) start
+answering, and ModemManager will happily adopt the modem and let NetworkManager
+show a **second, native mobile-broadband toggle** — often named after your SIM
+(e.g. "Lidl"). That toggle cannot actually carry data here (the data path needs
+the proprietary xmm7360 RPC channel), so it just competes with this project's
+toggle and confuses things.
+
+The installer ships `etc/udev/rules.d/99-fibocom-l850-mm-ignore.rules`, which
+sets `ID_MM_DEVICE_IGNORE=1` for the `8086:7360` device so ModemManager leaves
+it alone. If you ever see a stray mobile toggle, confirm the rule is installed
+and run:
+
+```bash
+sudo udevadm control --reload-rules && sudo udevadm trigger
+sudo systemctl restart ModemManager
+mmcli -L   # should report "No modems were found"
+```
 
 ## Kernel updates
 
