@@ -47,7 +47,7 @@ echo "==> xmm7360-pci dir:     $XMM7360_DIR"
 if [ ! -f "$XMM7360_DIR/rpc/open_xdatachannel.py" ]; then
     echo "WARNING: $XMM7360_DIR/rpc/open_xdatachannel.py not found."
     echo "         Clone the driver first, e.g.:"
-    echo "         sudo git clone https://github.com/xmm7360-pci/xmm7360-pci $XMM7360_DIR"
+    echo "         sudo git clone https://github.com/xmm7360/xmm7360-pci $XMM7360_DIR"
 fi
 
 # --- helper scripts ----------------------------------------------------------

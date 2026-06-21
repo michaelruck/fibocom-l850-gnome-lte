@@ -4,7 +4,7 @@
 GNOME Quick Settings toggle for mobile data, signal strength and APN.**
 
 This is the missing user-facing layer on top of the
-[xmm7360-pci](https://github.com/xmm7360-pci/xmm7360-pci) userspace driver:
+[xmm7360-pci](https://github.com/xmm7360/xmm7360-pci) userspace driver:
 a boot service that brings the modem online, small helper scripts, and a GNOME
 Shell extension that adds a **Mobile Data** toggle to Quick Settings (just like
 the Wi-Fi switch) showing operator, RAT and signal in dBm.
@@ -51,7 +51,7 @@ plus a proprietary `xmmrpc` port:
   port ("unhandled port type").
 
 So there is no native, ModemManager-based path on this hardware. The
-[xmm7360-pci](https://github.com/xmm7360-pci/xmm7360-pci) userspace driver speaks
+[xmm7360-pci](https://github.com/xmm7360/xmm7360-pci) userspace driver speaks
 that proprietary RPC itself and creates a plain `wwan0` network interface. This
 project wraps that into a boot service and a desktop toggle.
 
@@ -61,7 +61,7 @@ project wraps that into a boot service and a desktop toggle.
 
 - A Fibocom L850-GL / Intel XMM7360 modem (`lspci -nn | grep 7360`).
 - A **working, activated SIM** with a data plan.
-- The [xmm7360-pci](https://github.com/xmm7360-pci/xmm7360-pci) driver checked
+- The [xmm7360-pci](https://github.com/xmm7360/xmm7360-pci) driver checked
   out and **built for your running kernel** (see below).
 - GNOME Shell **45–48** (Wayland or X11) for the toggle. The helper scripts and
   boot service work without GNOME too.
@@ -75,7 +75,7 @@ project wraps that into a boot service and a desktop toggle.
 
 ```bash
 sudo apt install build-essential "linux-headers-$(uname -r)"   # Debian/Ubuntu
-sudo git clone https://github.com/xmm7360-pci/xmm7360-pci /opt/xmm7360-pci
+sudo git clone https://github.com/xmm7360/xmm7360-pci /opt/xmm7360-pci
 cd /opt/xmm7360-pci && make
 ```
 
@@ -223,7 +223,7 @@ was built with AI assistance, both of which EGO disallows — see
 ## Credits
 
 Built on top of the excellent
-[xmm7360-pci](https://github.com/xmm7360-pci/xmm7360-pci) userspace driver. This
+[xmm7360-pci](https://github.com/xmm7360/xmm7360-pci) userspace driver. This
 project only adds the boot service, helper scripts and GNOME integration.
 
 ## License
