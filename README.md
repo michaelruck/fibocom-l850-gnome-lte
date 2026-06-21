@@ -213,9 +213,11 @@ automation, set up DKMS for the xmm7360-pci module — that is out of scope here
 
 ---
 
-## Publishing the extension
+## Not on extensions.gnome.org
 
-Want to offer one-click install via extensions.gnome.org? See
+This extension is distributed **only** through this repo (the `install.sh` path
+above), not via extensions.gnome.org. For why — it calls privileged helpers and
+was built with AI assistance, both of which EGO disallows — see
 [docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## Credits
